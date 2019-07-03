@@ -34,17 +34,19 @@
 
         //工具栏上的所有的功能按钮和下拉框，可以在new编辑器的实例时选择自己需要的重新定义
         , toolbars: [[
-            'fullscreen', 'source', '|', 'undo', 'redo', '|',
-            'bold', 'italic', 'underline', 'fontborder', 'strikethrough', 'superscript', 'subscript', 'removeformat', 'formatmatch', 'autotypeset', 'blockquote', 'pasteplain', '|', 'forecolor', 'backcolor', 'insertorderedlist', 'insertunorderedlist', 'selectall', 'cleardoc', '|',
-            'rowspacingtop', 'rowspacingbottom', 'lineheight', '|',
-            'customstyle', 'paragraph', 'fontfamily', 'fontsize', '|',
-            'directionalityltr', 'directionalityrtl', 'indent', '|',
-            'justifyleft', 'justifycenter', 'justifyright', 'justifyjustify', '|', 'touppercase', 'tolowercase', '|',
-            'link', 'unlink', 'anchor', '|', 'imagenone', 'imageleft', 'imageright', 'imagecenter', '|',
-            'simpleupload', 'insertimage', 'emotion', 'scrawl', 'insertvideo', 'music', 'attachment', 'map', 'gmap', 'insertframe', 'insertcode', 'webapp', 'pagebreak', 'template', 'background', '|',
-            'horizontal', 'date', 'time', 'spechars', 'snapscreen', 'wordimage', '|',
-            'inserttable', 'deletetable', 'insertparagraphbeforetable', 'insertrow', 'deleterow', 'insertcol', 'deletecol', 'mergecells', 'mergeright', 'mergedown', 'splittocells', 'splittorows', 'splittocols', 'charts', '|',
-            'print', 'preview', 'searchreplace', 'drafts', 'help'
+            'bold', 'italic', 'underline', 'strikethrough ', '|', 'fontsize', 'forecolor ', '|',
+            'justifyleft', 'justifycenter', 'justifyright', '|', 'image', 'link', 'unlink', '|', 'removeformat', 
+            // 'fullscreen', 'source', '|', 'undo', 'redo', '|',
+            // 'bold', 'italic', 'underline', 'fontborder', 'strikethrough', 'superscript', 'subscript', 'removeformat', 'formatmatch', 'autotypeset', 'blockquote', 'pasteplain', '|', 'forecolor', 'backcolor', 'insertorderedlist', 'insertunorderedlist', 'selectall', 'cleardoc', '|',
+            // 'rowspacingtop', 'rowspacingbottom', 'lineheight', '|',
+            // 'customstyle', 'paragraph', 'fontfamily', 'fontsize', '|',
+            // 'directionalityltr', 'directionalityrtl', 'indent', '|',
+            // 'justifyleft', 'justifycenter', 'justifyright', 'justifyjustify', '|', 'touppercase', 'tolowercase', '|',
+            // 'link', 'unlink', 'anchor', '|', 'imagenone', 'imageleft', 'imageright', 'imagecenter', '|',
+            // 'simpleupload', 'insertimage', 'emotion', 'scrawl', 'insertvideo', 'music', 'attachment', 'map', 'gmap', 'insertframe', 'insertcode', 'webapp', 'pagebreak', 'template', 'background', '|',
+            // 'horizontal', 'date', 'time', 'spechars', 'snapscreen', 'wordimage', '|',
+            // 'inserttable', 'deletetable', 'insertparagraphbeforetable', 'insertrow', 'deleterow', 'insertcol', 'deletecol', 'mergecells', 'mergeright', 'mergedown', 'splittocells', 'splittorows', 'splittocols', 'charts', '|',
+            // 'print', 'preview', 'searchreplace', 'drafts', 'help'
         ]]
         //当鼠标放在工具栏上时显示的tooltip提示,留空支持自动多语言配置，否则以配置值为准
         //,labelMap:{
@@ -113,32 +115,48 @@
 
         //,pasteplain:false  //是否默认为纯文本粘贴。false为不使用纯文本粘贴，true为使用纯文本粘贴
         //纯文本粘贴模式下的过滤规则
-        //'filterTxtRules' : function(){
-        //    function transP(node){
-        //        node.tagName = 'p';
-        //        node.setStyle();
-        //    }
-        //    return {
-        //        //直接删除及其字节点内容
-        //        '-' : 'script style object iframe embed input select',
-        //        'p': {$:{}},
-        //        'br':{$:{}},
-        //        'div':{'$':{}},
-        //        'li':{'$':{}},
-        //        'caption':transP,
-        //        'th':transP,
-        //        'tr':transP,
-        //        'h1':transP,'h2':transP,'h3':transP,'h4':transP,'h5':transP,'h6':transP,
-        //        'td':function(node){
-        //            //没有内容的td直接删掉
-        //            var txt = !!node.innerText();
-        //            if(txt){
-        //                node.parentNode.insertAfter(UE.uNode.createText(' &nbsp; &nbsp;'),node);
-        //            }
-        //            node.parentNode.removeChild(node,node.innerText())
-        //        }
-        //    }
-        //}()
+        ,'filterTxtRules' : function(){
+          function delDom(node) { // 如果是图片、超链接 直接删除
+            node.parentNode.removeChild(node, node.innerText())
+          }
+          function transP(node) { // 清除样式
+            var html = node.innerHTML().replace(/(\s|&nbsp;)+/i, '&nbsp;');
+            node.innerHTML(html);
+            var style = getStyle(node);
+            node.setAttr('style', style.join(';'));
+          }
+          function getStyle(node) { // 保留filterStyle中的样式
+            var style = [];
+            var filterStyle = ['font-weight', 'font-style', 'text-decoration', 'color', 'text-align'];
+            for (var i = 0, len = filterStyle.length; i < len; i++) {
+              if (node.getStyle(filterStyle[i])) {
+                style.push(filterStyle[i] + ': ' + node.getStyle(filterStyle[i]));
+              }
+            }
+            return style;
+          }
+          return {
+            // 黑名单，以下标签及其子节点都会被过滤掉
+            '-': 'script style object iframe embed input select',
+            'a': delDom,  // 直接删除及其字节点内容
+            'img': delDom,
+            'p': transP,
+            'div': transP,
+            'span': transP,
+            'h1': transP,
+            'h2': transP,
+            'h3': transP,
+            'h4': transP,
+            'h5': transP,
+            'h6': transP,
+            'b': { '$': {} }, // $:{} 表示不保留任何属性
+            'br': { '$': {} },
+            'i': { '$': {} },
+            'li': { '$': {} },
+            'td': { '$': {} },
+            'ul': { '$': {} },
+          }
+        }()
 
         //,allHtmlEnabled:false //提交到后台的数据是否包含整个html字符串
 
